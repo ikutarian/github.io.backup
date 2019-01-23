@@ -1,6 +1,6 @@
 ---
-title: 《Go语言第一课》笔记
-date: 2019-01-05 15:36:05
+title: Go语言学习笔记
+date: 2019-01-09 10:35:22
 tags:
   - Go
   - 笔记
@@ -92,21 +92,81 @@ go version
 go version go1.11 linux/amd64
 ```
 
-# 怎么写代码
+# Hello World
 
-官网有一篇[文章](https://golang.org/doc/code.html)讲解了，现在总结一下
+新建一个名为 `hello.go` 的文件，内容为
 
-## 约定
+```go
+package main
 
-- 所有的代码都存放在一个 workspace 里
-- workspace 里有很多的版本控制工具管理的代码仓库
-- 每个代码仓库有一个或多个的 package
-- 每个 package 是一个目录，里面存放 Go 的源码文件
-- package 的路径表示 import path
+import "fmt"
 
-## Workspace
+func main() {
+    fmt.Printf("hello, go")
+}
+```
 
-workspace 下有两个目录：
+然后在 `hello.go` 的文件所在的路径运行如下命令
+
+```
+go run hello.go
+```
+
+就可以输出
+
+```
+hello go
+```
+
+# Workspace
+
+所有的代码都存放在一个 workspace 里。它其实就是一个目录，下面有两个子目录：
 
 - src：存放 Go 源码文件
 - bin：存放可执行的文件
+
+go tool 会编译 src 里的源码，然后安装二进制文件到 bin 目录里
+
+# GOPATH
+
+GOPATH 环境变量指定了 workspace 位置
+
+## Windows 下的设置
+
+打开环境变量，可以发现，默认在“用户环境变量”中有一个 GOPATH
+
+{% asset_img Snipaste_2019-01-09_10-17-10.png %}
+
+删掉吧，没用。改在“系统环境变量”中添加一个 GOPATH（路径不要和 Go 安装路径一样）
+
+{% asset_img Snipaste_2019-01-09_10-19-01.png %}
+
+在命令行中输入 `go env` 查看 go 的环境变量配置信息，就可以看到 GOPATH 的值了
+
+{% asset_img Snipaste_2019-01-09_10-21-12.png %}
+
+或者直接输入 `go env GOPATH` 也行
+
+```
+C:\Users\Think>go env GOPATH
+F:\go
+```
+
+为了方便，把 `%GOPATH%\bin` 也加入环境变量中
+
+# 打印函数
+
+Go 的 fmt 包下有两个打印内容的方法：
+
+- Println
+- Printf
+
+`Println` 可以打印任何类型的变量。`Printf` 必须使用格式化输出才能正确调用
+
+```
+a := 10
+fmt.Println(a)　　    //right
+fmt.Println("abc")　　//right
+fmt.Printf("%d",a)　　//right
+fmt.Printf(a)　　     //error
+```
