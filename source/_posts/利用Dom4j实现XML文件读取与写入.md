@@ -156,3 +156,12 @@ public class HelloWorld {
 }
 ```
 
+# 额外的内容
+
+如果读取的不是 XML 文件，而是 XML 字符串的话，dom4j 提供了一个工具类
+
+```java
+Document document = DocumentHelper.parseText(xmlStr);
+```
+
+这样就可以得到 `Document` 对象了，接下来的操作就一模一样了
