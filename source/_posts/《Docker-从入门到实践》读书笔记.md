@@ -13,7 +13,7 @@ categories:
 
 # 关于这本书
 
-可以在《[Docker — 从入门到实践](https://yeasy.gitbooks.io/docker_practice/content/)》看到原文
+可以在《[Docker — 从入门到实践](https://yeasy.gitbooks.io/docker_practice/content/)》看到原文。也可以直接在[这里](/uploads/docker_practice.pdf)下载
 
 # Docker 简介
 

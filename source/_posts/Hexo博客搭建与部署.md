@@ -30,10 +30,13 @@ categories:
 ```
 # 安装 Hexo
 npm install hexo-cli -g
+
 # 初始化一个名为 blog 的博客
 hexo init blog
+
 # 进入 blog 目录
 cd blog
+
 # 安装依赖
 npm install
 ```

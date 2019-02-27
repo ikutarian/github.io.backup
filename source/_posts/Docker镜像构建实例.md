@@ -192,19 +192,14 @@ FROM ubuntu:16.04
 # 作者信息
 LABEL maintainer="ikutarian46@ikutarian46.com"
 
-# 定义 JDK 和 Tomcat 的存放位置
-ARG BASE_DIR=/usr/local/soft
-ARG JDK_DIR=${BASE_DIR}/jdk
-ARG TOMCAT_DIR=${BASE_DIR}/tomcat
-
 # 拷贝 JDK 和 Tomcat 的安装包到指定位置
-RUN mkdir -p ${BASE_DIR}
-COPY jdk1.8.0_201 ${JDK_DIR}
-COPY apache-tomcat-8.5.38 ${TOMCAT_DIR}
+RUN mkdir -p /usr/local/soft
+COPY jdk1.8.0_201 /usr/local/soft/jdk
+COPY apache-tomcat-8.5.38 /usr/local/soft/tomcat
 
 # 添加 JDK 和 Tomcat 的环境变量
-ENV JAVA_HOME ${JDK_DIR}
-ENV CATALINA_HOME ${TOMCAT_DIR}
+ENV JAVA_HOME /usr/local/soft/jdk
+ENV CATALINA_HOME /usr/local/soft/tomcat
 ENV PATH $PATH:$JAVA_HOME/bin:$CATALINA_HOME/bin
 
 # 开放 8080 端口
@@ -227,3 +222,79 @@ docker run -d -p 8080:8080 ikutarian/tomcat:1.0
 ```
 
 浏览器访问 `<宿主机ip>:8080` 即可看到界面了
+
+# 一个使用阿里软件源的 Ubuntu 镜像
+
+新建一个文件夹比如 `new_ubuntu`
+
+准备好一个 Ubuntu 16.04 的阿里云源文件 `sources.list`， 内容为
+
+```
+# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
+deb http://mirrors.aliyun.com/ubuntu/ xenial main restricted universe multiverse
+# deb-src http://mirrors.aliyun.com/ubuntu/ xenial main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ xenial-updates main restricted universe multiverse
+# deb-src http://mirrors.aliyun.com/ubuntu/ xenial-updates main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ xenial-backports main restricted universe multiverse
+# deb-src http://mirrors.aliyun.com/ubuntu/ xenial-backports main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ xenial-security main restricted universe multiverse
+# deb-src http://mirrors.aliyun.com/ubuntu/ xenial-security main restricted universe multiverse
+
+# 预发布软件源，不建议启用
+# deb http://mirrors.aliyun.com/ubuntu/ xenial-proposed main restricted universe multiverse
+# deb-src http://mirrors.aliyun.com/ubuntu/ xenial-proposed main restricted universe multiverse
+```
+
+然后创建一个 Dockerfile 文件，填入以下内容
+
+```dockerfile
+# 以 ubuntu:16.04 为基础镜像
+FROM ubuntu:16.04
+
+# 备份原有的源
+RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak
+
+# 复制阿里源
+COPY sources.list /etc/apt/sources.list
+
+# 更新源
+RUN apt-get update
+```
+
+然后是构建
+
+```
+docker build -t ikutarian/new_ubuntu .
+```
+
+# 自己创建一个 Nginx 镜像
+
+新建一个文件夹，比如 `static_web`，然后创建一个 Dockerfile 文件，填入如下内容
+
+```dockerfile
+# 以 ikutarian/new_ubuntu 为基础镜像
+FROM ikutarian/new_ubuntu
+
+# 安装 Nginx
+RUN apt-get install -y nginx
+
+# 开放 80 端口
+EXPOSE 80
+
+# 容器启动时，执行的命令，这里是在前台启动 Nginx
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+构建
+
+```
+docker build -t ikutarian/static_web .
+```
+
+启动容器
+
+```
+docker run -d -p 80:80 ikutarian/static_web
+```
+
+访问宿主机的 IP 就能看到 Nginx 的页面了
