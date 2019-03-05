@@ -245,6 +245,8 @@ deb http://mirrors.aliyun.com/ubuntu/ xenial-security main restricted universe m
 # deb-src http://mirrors.aliyun.com/ubuntu/ xenial-proposed main restricted universe multiverse
 ```
 
+阿里云软件源如何配置可以看这篇文章：《{% post_link ubuntu软件源 %}》
+
 然后创建一个 Dockerfile 文件，填入以下内容
 
 ```dockerfile
@@ -298,3 +300,171 @@ docker run -d -p 80:80 ikutarian/static_web
 ```
 
 访问宿主机的 IP 就能看到 Nginx 的页面了
+
+# 一个体积很小的 Docker 镜像
+
+官方的 hello-world 镜像才 1.84KB，算是很小了。我也试试看能不能创建一个体积很小的 Docker 镜像
+
+```
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+hello-world         latest              fce289e99eb9        2 months ago        1.84kB
+```
+
+首先创建一个文件夹 `hello`，然后在文件夹中新建一个 `hello.c`，填入以下内容
+
+```c
+#include<stdio.h>
+
+int main()
+{
+  printf("Hello, World\n");
+  return 0;
+}
+```
+
+然后编译 `hello.c`，生成可执行文件 `hello`
+
+```
+gcc hello.c -o hello
+```
+
+运行可执行文件 `hello`
+
+```
+./hello
+```
+
+就可以输出内容
+
+```
+Hello, World
+```
+
+编写 Dockerfile，填入如下内容
+
+```dockerfile
+# 使用空白镜像
+FROM scratch
+
+# 作者信息
+LABEL maintainer="ikutarian <ikutarian@ikutarian.com>"
+
+# 拷贝 hello 文件到根目录
+COPY hello /
+
+# 容器启动时运行的命令
+CMD ["/hello"]
+```
+
+构建镜像，取名为 `ikutarian/hello`
+
+```
+docker build -t ikutarian/hello .
+```
+
+查看刚刚构建好的镜像，可以看到体积为 10.6KB，算是很小了
+
+```
+ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+ikutarian/hello     latest              3dfd813fabfd        53 seconds ago      10.6kB
+hello-world         latest              fce289e99eb9        2 months ago        1.84kB
+```
+
+现在运行一下
+
+```
+docker run --rm ikutarian/hello
+```
+
+却发现报错了
+
+```
+standard_init_linux.go:190: exec user process caused "no such file or directory"
+```
+
+由于刚刚我们编译 `hello.c` 的时候，采用的是动态链接，gcc 帮我们默认链接了库文件，而 `ikutarian/hello` 中只有根目录下一个 `hello` 文件，并没有这些库文件，所以容器中的 `hello` 肯定运行不起来。使用 `ldd hello` 命令查看 `hello` 链接了哪些库文件
+
+```
+/lib/ld-musl-x86_64.so.1 (0x7f12fcfc8000)
+libc.musl-x86_64.so.1 => /lib/ld-musl-x86_64.so.1 (0x7f12fcfc8000)
+```
+
+这次我们采用静态编译的方式编译 `hello.c` 
+
+```
+gcc -static hello.c -o hello
+```
+
+重新构建镜像，现在的镜像大小是 82.7kB，因为加入了库文件，所以镜像变大了
+
+```
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+ikutarian/hello     latest              cdd11ba57412        8 seconds ago       82.7kB
+hello-world         latest              fce289e99eb9        2 months ago        1.84kB
+```
+
+不过现在重新运行镜像，没有问题，可以输出 `Hello, World`。不过和官方的 `hello-world` 镜像比起来，我的 `ikutarian/hello` 镜像体积太大了。到 Github 上  `hello-world` 的仓库]查看一下
+
+Dockerfile 如下
+
+```dockerfile
+FROM scratch
+COPY hello /
+CMD ["/hello"]
+```
+
+`hello.c` 如下
+
+```c
+//#include <unistd.h>
+#include <sys/syscall.h>
+
+#ifndef DOCKER_IMAGE
+	#define DOCKER_IMAGE "hello-world"
+#endif
+
+#ifndef DOCKER_GREETING
+	#define DOCKER_GREETING "Hello from Docker!"
+#endif
+
+#ifndef DOCKER_ARCH
+	#define DOCKER_ARCH "amd64"
+#endif
+
+const char message[] =
+	"\n"
+	DOCKER_GREETING "\n"
+	"This message shows that your installation appears to be working correctly.\n"
+	"\n"
+	"To generate this message, Docker took the following steps:\n"
+	" 1. The Docker client contacted the Docker daemon.\n"
+	" 2. The Docker daemon pulled the \"" DOCKER_IMAGE "\" image from the Docker Hub.\n"
+	"    (" DOCKER_ARCH ")\n"
+	" 3. The Docker daemon created a new container from that image which runs the\n"
+	"    executable that produces the output you are currently reading.\n"
+	" 4. The Docker daemon streamed that output to the Docker client, which sent it\n"
+	"    to your terminal.\n"
+	"\n"
+	"To try something more ambitious, you can run an Ubuntu container with:\n"
+	" $ docker run -it ubuntu bash\n"
+	"\n"
+	"Share images, automate workflows, and more with a free Docker ID:\n"
+	" https://hub.docker.com/\n"
+	"\n"
+	"For more examples and ideas, visit:\n"
+	" https://docs.docker.com/get-started/\n"
+	"\n";
+
+void _start() {
+	//write(1, message, sizeof(message) - 1);
+	syscall(SYS_write, 1, message, sizeof(message) - 1);
+
+	//_exit(0);
+	syscall(SYS_exit, 0);
+}
+```
+
+Dockerfile 和我的是一样的，之所以 `hello-world` 之所以这么小，就是因为在 `hello.c` 上做的文章。C 语言我不熟，研究就到此为止吧
+
+# Hexo 的持续集成
