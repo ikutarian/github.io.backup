@@ -119,7 +119,7 @@ post_wordcount:
 {% post_link 文章文件名 %}
 ```
 
-比如我有一篇《理解Linux的硬链接和软链接》的文章，那我可以这么引用
+比如我有一篇《{% post_link 理解Linux的硬链接和软链接%}》的文章，那我可以这么引用
 
 ```
 {% post_link 理解Linux的硬链接和软链接 %}

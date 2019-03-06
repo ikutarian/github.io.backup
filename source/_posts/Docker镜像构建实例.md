@@ -467,4 +467,14 @@ void _start() {
 
 Dockerfile 和我的是一样的，之所以 `hello-world` 之所以这么小，就是因为在 `hello.c` 上做的文章。C 语言我不熟，研究就到此为止吧
 
-# Hexo 的持续集成
+# Hexo
+
+https://neue.v2ex.com/t/279518#reply2
+
+https://hub.docker.com/search?q=hexo&type=image
+
+https://www.google.com/search?safe=strict&source=hp&ei=2Od9XI3kKMv7-Qag_prABg&q=docker+hexo&btnK=Google+%E6%90%9C%E7%B4%A2&oq=docker+hexo&gs_l=psy-ab.3..0j0i30j0i8i30l6.2220.5564..6099...2.0..0.162.1724.0j14......0....1..gws-wiz.....0..35i39j0i131j0i3j0i12i131j0i203j0i12.HFxEMmr-rNk
+
+# Docker 部署 SpringBoot 项目
+
+https://spring.io/blog/2018/11/08/spring-boot-in-a-container
