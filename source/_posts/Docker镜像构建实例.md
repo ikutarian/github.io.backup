@@ -467,7 +467,186 @@ void _start() {
 
 Dockerfile 和我的是一样的，之所以 `hello-world` 之所以这么小，就是因为在 `hello.c` 上做的文章。C 语言我不熟，研究就到此为止吧
 
+# 一个 Python 的 flask 框架 demo
+
+新建一个文件夹 flask
+
+```
+mkdir flask
+cd flask
+```
+
+新建 app.py 文件，写入如下代码
+
+```python
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello():
+    return 'hello, world'
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
+```
+
+新建一个 Dockerfile
+
+```dockerfile
+# 以 python:2.7 为基础镜像
+FROM python:2.7
+
+# 作者信息
+LABEL maintainer="ikutarian <ikutarian@ikutarian.com>"
+
+# 安装 flask 框架
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple flask
+
+# 拷贝 app.py 到 /app/ 文件夹下
+COPY app.py /app/
+
+# 切换工作目录到 /app/ 文件夹
+WORKDIR /app/
+
+# 开放 5000 端口
+EXPOSE 5000
+
+# 容器启动时执行 python app.py 命令
+CMD ["python", "app.py"]
+```
+
+构建镜像
+
+```
+docker build -t ikutarian/flask-hello .
+```
+
+运行容器
+
+```
+docker run -p 5000:5000 -d ikutarian/flask-hello
+```
+
+浏览器访问 `http://宿主机ip:5000` 即可看到 `hello world` 返回
+
+# 搭建本地 Python Flask 开发环境
+
+新建一个文件夹 flask_dev
+
+```
+mkdir flask_dev
+cd flask_dev
+```
+
+新建 app.py 文件，写入如下代码
+
+```python
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello():
+    return 'hello, world'
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
+```
+
+Dockerfile
+
+```dockerfile
+# 以 python:2.7 为基础镜像
+FROM python:2.7
+
+# 作者信息
+LABEL maintainer="ikutarian <ikutarian@ikutarian.com>"
+
+# 安装 flask 框架
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple flask
+
+# 切换工作目录到 /app/ 文件夹
+WORKDIR /app/
+
+# 创建一个挂载点
+VOLUME /app/
+
+# 开放 5000 端口
+EXPOSE 5000
+
+# 容器启动时执行命令
+ENTRYPOINT ["python"]
+
+# 命令的参数，默认为空
+CMD []
+```
+
+运行容器，同时把当前路径挂载到 `/app/` 文件夹，并且指定 python 文件
+
+```
+docker run -d -p 5000:5000 -v $(pwd):/app/ ikutarian/pyton_dev app.py
+```
+
+浏览器访问 `http://宿主机ip:5000` 即可看到 `hello world` 返回
+
+# stress镜像
+
+新建文件夹 `stress`，然后在里面新建一个 Dockerfile
+
+```dockerfile
+FROM ikutarian/aliyun_ubuntu
+
+RUN apt-get update && apt-get install -y stress && apt-get clean
+
+ENTRYPOINT ["/usr/bin/stress"]
+
+CMD []
+```
+
+构建镜像
+
+```
+docker build -t ikutarian/stress .
+```
+
+注意 Dockerfile 中 ENTRYPOINT 和 CMD 都有，说明以下方式调用都可以
+
+```
+docker run -it ikutarian/stress
+docker run -it ikutarian/stress --vm 1 --verbose
+```
+
+具体原因看这篇文章：《{% post_link Docker中RUN、CMD和ENTRYPOINT的区别 %}》
+
 # Hexo
+
+```dockerfile
+# 指定基础镜像，为了减少大小，采用了 alpine 镜像
+FROM node:8-alpine
+
+# 作者信息
+LABEL maintainer="ikutarian <ikutarian@ikutarian.com>"
+
+# 切换工作目录到 /hexo/ 文件夹
+WORKDIR /hexo/
+
+# 安装 hexo，并新建一个 blog
+RUN npm config set registry https://registry.npm.taobao.org \
+    && npm install hexo-cli -g \
+    && hexo init blog \
+    && cd blog \
+    && npm install
+
+# 开放端口
+EXPOSE 4000
+
+# 容器启动时默认执行的命令
+ENTRYPOINT ["hexo"]
+
+# 后续的命令由用户自己指定
+CMD ["server"]
+```
 
 https://neue.v2ex.com/t/279518#reply2
 

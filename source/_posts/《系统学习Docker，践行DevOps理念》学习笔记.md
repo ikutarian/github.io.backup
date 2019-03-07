@@ -130,3 +130,17 @@ RUN apt-get update && apt-get install -y mysql-server = "${MYSQL_VERSION}" \
 ## CMD 与 ENTRYPOINT
 
 看这篇文章《{% post_link Docker中RUN、CMD和ENTRYPOINT的区别 %}》
+
+# 如何进入一个正在运行的容器
+
+使用 `docker exec` 命令，比如
+
+```
+docker exec -it <CONTAINER_ID> /bin/bash
+docker exec -it <CONTAINER_ID> python
+docker exec -it <CONTAINER_ID> ip a
+```
+
+# 容器的资源限制
+
+可以对容器的资源，比如 CPU、内存等进行限制
