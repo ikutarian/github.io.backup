@@ -15,11 +15,38 @@ Ubuntu 原生的软件源在国内访问太慢了，如果使用国内的镜像�
 
 # 备份源文件
 
+首先备份一下，如果出错了还可以恢复
+
 ```
 cp /etc/apt/sources.list /etc/apt/sources.list.bak
 ```
 
-# 软件源怎么找
+# 更换源的方法
+
+有两种方法：
+
+1. 通过 sed 命令进行文本替换
+2. 替换 /etc/apt/sources.list 文件
+
+# 通过 sed 命令进行文本替换
+
+一般情况下，更改 `/etc/apt/sources.list` 文件中 Ubuntu 默认的源地址 `http://archive.ubuntu.com/` 为你想要的地址即可，比如我要把源更换成中科大的
+
+```
+sudo sed -i 's/archive.ubuntu.com/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
+```
+
+通过这条命令，就可以把 `/etc/apt/sources.list` 文件中 Ubuntu 默认的源地址给替换了。接着还要 update 一下
+
+```
+apt-get update
+```
+
+第二种方法就是手动替换 `/etc/apt/sources.list` 文件了，继续看下面的文档吧
+
+# 替换 /etc/apt/sources.list 文件
+
+## 软件源怎么找
 
 打开[清华大学的软件源首页](https://mirrors.tuna.tsinghua.edu.cn/help/ubuntu/)就能看到了，列出了不同版本的 Ubuntu 使用的源
 
@@ -57,7 +84,7 @@ deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-security main restricted
 
 可以使用记事本的替换功能，把 `mirrors.tuna.tsinghua.edu.cn` 替换成 `mirrors.aliyun.com`，这样就是阿里云的源了
 
-# 替换源
+## 替换源
 
 把 `/etc/apt/sources.list` 内容替换成如下
 
@@ -77,7 +104,7 @@ deb http://mirrors.aliyun.com/ubuntu/ xenial-security main restricted universe m
 # deb-src http://mirrors.aliyun.com/ubuntu/ xenial-proposed main restricted universe multiverse
 ```
 
-# 刷新
+## 刷新
 
 输入以下命令
 
@@ -85,7 +112,7 @@ deb http://mirrors.aliyun.com/ubuntu/ xenial-security main restricted universe m
 apt-get update
 ```
 
-# 规律
+# 源的规律
 
 我发现不同版本 Ubuntu 的软件源都差不多，比如下面是 16.04 的其中一个源
 
@@ -111,3 +138,7 @@ Codename:	xenial
 ```
 
 可以看到版本（Release）是 16.04，版本名称（Codename）是 `xenial`。所以不同版本的源，只需要把 Codename 换一下其他部分不用变就可以拿来使用了
+
+# 参考
+
+- [Ubuntu镜像使用帮助](https://lug.ustc.edu.cn/wiki/mirrors/help/ubuntu)

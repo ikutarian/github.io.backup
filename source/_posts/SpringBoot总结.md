@@ -134,7 +134,7 @@ public class HelloController {
 
 可以写多个类似 `application-{profile}.yml` 格式的配置文件，然后指定使用哪一个
 
-首先项目种还是必须得有 `application.yml`。然后可以按照 `application-{profile}.yml` 格式写其他的配置文件，最后在 `application.yml` 中指定使用哪一个配置文件
+首先项目中还是必须得有 `application.yml`，以它为主。然后可以按照 `application-{profile}.yml` 格式写其他的配置文件
 
 假设，现在加上两个配置文件：
 
@@ -175,4 +175,10 @@ spring:
 spring:
   profiles:
     active: prod
+```
+
+也可以在部署 jar 包时指定使用哪一个配置
+
+```
+java -jar xxx.jar --spring.profiles.active=prod
 ```
