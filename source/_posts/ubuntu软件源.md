@@ -139,6 +139,16 @@ Codename:	xenial
 
 可以看到版本（Release）是 16.04，版本名称（Codename）是 `xenial`。所以不同版本的源，只需要把 Codename 换一下其他部分不用变就可以拿来使用了
 
+# 更简单的方法
+
+打开[阿里云镜像站](https://opsx.alibaba.com/mirror)，可以看到一堆的镜像列表，点击右边的“帮助”
+
+{% asset_img Snipaste_2019-04-09_16-45-11.png %}
+
+会显示一个弹窗，详细说明了更换镜像的方法了，按照操作的来就行
+
+{% asset_img Snipaste_2019-04-09_16-46-02.png %}
+
 # 参考
 
 - [Ubuntu镜像使用帮助](https://lug.ustc.edu.cn/wiki/mirrors/help/ubuntu)
