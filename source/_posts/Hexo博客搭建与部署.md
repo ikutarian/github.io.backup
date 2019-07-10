@@ -206,3 +206,29 @@ hexo deploy
 ```
 
 这样可以把生成好到文章 push 到 master 分支了。稍等一会儿，打开 youname.github.io 就能看到新文章了
+
+# 一些使用技巧
+
+## 引用图片
+
+```
+{% asset_img 图片文件名 %}
+```
+
+## 引用站内文章
+
+```
+{% post_link 文章文件名（不要后缀） 文章标题（可选） %}
+```
+
+比如
+
+```
+{% post_link Hello %}
+```
+
+或者
+
+```
+{% post_link Hello 你好 %}
+```
