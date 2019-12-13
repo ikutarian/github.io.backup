@@ -70,8 +70,8 @@ server {
     }
     
     # 以api前缀开头的请求都转发到后端
-    location ^~ /api/ {
-        proxy_pass http://192.168.168.100:2077/api/;
+    location /api {
+        proxy_pass http://192.168.168.100:2077/api;
     }
 }
 ```

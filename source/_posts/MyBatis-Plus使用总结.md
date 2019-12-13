@@ -19,25 +19,31 @@ MyBatis-Plus 是一个 MyBatis 的增强工具，在 MyBatis 的基础上只做�
 
 <!-- more -->
 
+# 特性
+
+- 无侵入、损耗小、强大的 CURD 操作
+- 支持 Lambda 形式调用，支持多种数据库
+
 # 准备数据库与数据
+
+这里使用的是 MySQL 数据库
 
 ```sql
 CREATE TABLE USER (
-    id BIGINT PRIMARY KEY NOT NULL  COMMENT 'id',
+    id BIGINT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'id',
     name VARCHAR(30) DEFAULT NULL COMMENT '姓名',
     age INT DEFAULT NULL COMMENT '年龄',
     email VARCHAR(50) DEFAULT NULL COMMENT '邮箱',
     manager_id BIGINT DEFAULT NULL COMMENT '直属上级id',
-    create_time DATETIME DEFAULT NULL COMMENT '创建时间',
-    CONSTRAINT manager_fk FOREIGN KEY (manager_id) REFERENCES user (id)
+    create_time DATETIME DEFAULT NULL COMMENT '创建时间'
 ) ENGINE=INNODB CHARSET=UTF8;
 
 INSERT INTO user (id, name, age, email, manager_id, create_time)
-VALUES (1087982257332887553, '大boss', 40, 'boss@baomidu.com', null, '2019-01-11 14:20:20'),
-(1088248166370832385, '王天风', 25, 'wtf@baomidu.com', 1087982257332887553, '2019-02-05 11:22:22'),
-(1088250446457389085, '李艺伟', 28, 'lyw@baomidu.com', 1088248166370832385, '2019-02-14 08:31:16'),
-(1094590409767661570, '张雨琪', 31, 'zjq@baomidu.com', 1088248166370832385, '2019-01-14 09:15:15'),
-(1094592041087729666, '刘红雨', 32, 'lhm@baomidu.com', 1088248166370832385, '2019-01-14 09:48:16');
+VALUES (1, '大boss', 40, 'boss@baomidu.com', null, '2019-01-11 14:20:20'),
+(2, '王天风', 25, 'wtf@baomidu.com', 1, '2019-02-05 11:22:22'),
+(3, '李艺伟', 28, 'lyw@baomidu.com', 1, '2019-02-14 08:31:16'),
+(4, '张雨琪', 31, 'zjq@baomidu.com', 1, '2019-01-14 09:15:15'),
+(5, '刘红雨', 32, 'lhm@baomidu.com', 1, '2019-01-14 09:48:16');
 ```
 
 # 依赖
@@ -61,7 +67,7 @@ MyBatis-Plus 的 SpringBoot Starter
 </dependency>
 ```
 
-简化 Getter、Setter
+简化 Getter、Setter 的 lombok
 
 ```xml
 <dependency>
@@ -75,6 +81,8 @@ MyBatis-Plus 的 SpringBoot Starter
 
 ## 数据库连接
 
+打开 `application.yml`，加入以下配置
+
 ```yml
 spring:
   datasource:
@@ -86,7 +94,7 @@ spring:
 
 ## 日志
 
-dao 所在的包名是 `com.ikutarian.mp.dao`，因此 `application.yml` 中指定 dao 日志的输出如下，注意需要使用 `trace` 级别的日志
+dao 所在的包名是 `com.ikutarian.mp.dao`，因此 `application.yml` 中指定 dao 日志的输出如下，注意需要使用 `trace` 级别的日志，这样可以看到比 `debug` 级别更多的日志信息
 
 ```yml
 logging:
@@ -107,6 +115,78 @@ logging:
 
 ```java
 @TableField(exist = false)
+```
+
+# 创建 Entity
+
+默认 Entity 的属性是驼峰命名的名称
+
+```java
+package com.ikutarian.mp.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import java.util.Date;
+
+@Getter
+@Setter
+@ToString
+public class User {
+
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    private String name;
+    private Integer age;
+    private String email;
+    private Long managerId;
+    private Date createTime;
+}
+```
+
+# 创建 Dao
+
+新建一个接口，继承 `BaseMapper`，并且传入 Entity。这样 Dao 接口写好了
+
+```java
+package com.ikutarian.mp.dao;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.ikutarian.mp.entity.User;
+
+public interface UserMapper extends BaseMapper<User> {
+}
+```
+
+现在就可以利用 MyBatis-Plus 提供的一系列方法了
+
+# 新增
+
+```java
+@Test
+public void insert() {
+    User user = new User();
+    user.setName("刘明强");
+    user.setAge(31);
+    user.setManagerId(1L);
+    user.setCreateTime(new Date());
+
+    int rows = userMapper.insert(user);
+    System.out.println("影响记录数: " + rows);
+    System.out.println("User的新主键是: " + user.getId());
+}
+```
+
+控制台输出
+
+```
+DEBUG==>  Preparing: INSERT INTO user ( name, age, manager_id, create_time ) VALUES ( ?, ?, ?, ? ) 
+DEBUG==> Parameters: 刘明强(String), 31(Integer), 1(Long), 2019-09-03 21:14:46.349(Timestamp)
+DEBUG<==    Updates: 1
+影响记录数: 1
+User的新主键是: 6
 ```
 
 # 查询
@@ -192,8 +272,8 @@ IPage<Map<String, Object>> selectMapsPage(IPage<T> page, @Param(Constants.WRAPPE
 
 MyBatis-Plus 提供了两个方法：
 
-- `T selectById(id)`：根据ID查询
-- `List<T> selectBatchIds(idList)`： 根据ID批量查询
+- `T selectById(id)`：根据 ID 查询
+- `List<T> selectBatchIds(idList)`： 根据 ID 批量查询
 
 比如
 
@@ -203,7 +283,8 @@ MyBatis-Plus 提供了两个方法：
  */
 @Test
 public void selectById() {
-    User user = userMapper.selectById(1094590409767661570L);
+    User user = userMapper.selectById(1L);
+
     System.out.println(user);
 }
 
@@ -212,19 +293,31 @@ public void selectById() {
  */
 @Test
 public void selectBatchIds() {
-    List<Long> ids = Arrays.asList(1088248166370832385L, 
-        1094592041087729666L, 
-        1145231894878457857L);
+    List<Long> ids = Arrays.asList(1L, 2L, 3L);
     List<User> users = userMapper.selectBatchIds(ids);
+
     users.forEach(System.out::println);
 }
 ```
 
 ## 根据字段名与字段值查询
 
-比如要查询 `name` 为`王天风`，`age` 为 `25` 的数据，也就是 `SELECT * FROM user WHERE name = '王天风' AND age = 25`，可以使用 `selectByMap(Map<String, Object> columnMap)`
+MyBatis-Plus 提供了：
 
-比如
+- `selectByMap(Map<String, Object> columnMap)`
+
+比如 SQL 如下
+
+```sql
+SELECT 
+    *
+FROM
+    user
+WHERE 
+    name = '王天风' AND age = 25
+```
+
+Java 代码是
 
 ```java
 /**
@@ -232,15 +325,18 @@ public void selectBatchIds() {
  */
 @Test
 public void selectByMap() {
+    // 将查询条件包装成 Map<String, Object>
     Map<String, Object> columnMap = new HashMap<>();
     columnMap.put("name", "王天风");
     columnMap.put("age", 25);
+    // 传入查询条件
     List<User> users = userMapper.selectByMap(columnMap);
+
     users.forEach(System.out::println);
 }
 ```
 
-## 条件构造器查询
+## 条件构造器（Wrapper）查询
 
 具体 API 看[官方文档](https://mp.baomidou.com/guide/wrapper.html)
 
@@ -265,9 +361,10 @@ Java 代码
 ```java
 @Test
 public void selectByWrapper() {
-    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-    queryWrapper.like("name", "雨").lt("age", 40);
-    List<User> users = userMapper.selectList(queryWrapper);
+    List<User> users = userMapper.selectList(new QueryWrapper<User>()
+            .like("name", "雨")
+            .lt("age", 40));
+
     users.forEach(System.out::println);
 }
 ```
@@ -293,12 +390,11 @@ Java 代码
 ```java
 @Test
 public void selectByWrapper2() {
-    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-    queryWrapper.like("name", "雨")
-            .ge("age", 20)
-            .le("age", 40)
-            .isNotNull("email");
-    List<User> users = userMapper.selectList(queryWrapper);
+    List<User> users = userMapper.selectList(new QueryWrapper<User>()
+            .like("name", "雨")
+            .between("age", 20, 40)
+            .isNotNull("email"));
+
     users.forEach(System.out::println);
 }
 ```
@@ -314,7 +410,7 @@ FROM
     user
 WHERE
     name LIKE '王%'
-    AND age >= 25
+    OR age >= 25
 ORDER BY
     age DESC,
     id ASC
@@ -325,13 +421,13 @@ Java 代码
 ```java
 @Test
 public void selectByWrapper3() {
-    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-    queryWrapper.likeRight("name", "王")
+    List<User> users = userMapper.selectList(new QueryWrapper<User>()
+            .likeRight("name", "王")
             .or()
-            .ge("age", 25)
+            .ge("age", 40)
             .orderByDesc("age")
-            .orderByDesc("id");
-    List<User> users = userMapper.selectList(queryWrapper);
+            .orderByAsc("id"));
+
     users.forEach(System.out::println);
 }
 ```
@@ -353,18 +449,20 @@ WHERE
 
 Java代码。这里要使用 [apply](https://mp.baomidou.com/guide/wrapper.html#apply) 和 [inSql](https://mp.baomidou.com/guide/wrapper.html#insql)
 
+`apply` 用于调用 SQL 的函数。`inSql` 用在调用 `IN` 后面拼接 SQL 语句的场景
+
 ```java
 @Test
 public void selectByWrapper4() {
-    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-    queryWrapper.apply("date_format(create_time,'%Y-%m-%d') = {0}", "2019-02-14")
-            .inSql("manager_id", "SELECT id FROM user WHERE name LIKE '王%'");
-    List<User> users = userMapper.selectList(queryWrapper);
+    List<User> users = userMapper.selectList(new QueryWrapper<User>()
+            .apply("date_format(create_time,'%Y-%m-%d') = {0}", "2019-02-14")
+            .inSql("manager_id", "SELECT id FROM user WHERE name LIKE '王%'"));
+    
     users.forEach(System.out::println);
 }
 ```
 
-使用 `apply` 的时候推荐使用占位符 `{}`，这样可以防止 SQL 注入的风险
+**注意：**使用 `apply` 的时候推荐使用占位符 `{}`，这样可以防止 SQL 注入的风险
 
 5. 姓王并且（年龄小于40或者邮箱不为空）
 
@@ -380,17 +478,19 @@ WHERE
     AND (age < 40 OR email IS NOT NULL)
 ```
 
+这里 `AND` 后面跟着一个括号，括号里也是一个条件判断。这时候要用 [and](https://mp.baomidou.com/guide/wrapper.html#and)
+
 Java代码
 
 ```java
 @Test
 public void selectByWrapper5() {
-    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-    queryWrapper.likeRight("name", "王")
+    List<User> users = userMapper.selectList(new QueryWrapper<User>()
+            .likeRight("name", "王")
             .and(qr -> qr.lt("age", 40)
-                    .or()
-                    .isNotNull("email"));
-    List<User> users = userMapper.selectList(queryWrapper);
+                        .or()
+                        .isNotNull("email")));
+    
     users.forEach(System.out::println);
 }
 ```
@@ -409,17 +509,19 @@ WHERE
     OR (age < 40 AND age > 20 AND email IS NOT NULL)
 ```
 
+和上面的例子 5 一样，`OR` 后面也跟着一对括号。这时候可以用 [or](https://mp.baomidou.com/guide/wrapper.html#or)
+
 Java代码
 
 ```java
 @Test
 public void selectByWrapper6() {
-    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-    queryWrapper.likeRight("name", "王")
+    List<User> users = userMapper.selectList(new QueryWrapper<User>()
+            .likeRight("name", "王")
             .or(qr -> qr.lt("age", 40)
-                    .gt("age", 20)
-                    .isNotNull("email"));
-    List<User> users = userMapper.selectList(queryWrapper);
+                        .gt("age", 20)
+                        .isNotNull("email")));
+    
     users.forEach(System.out::println);
 }
 ```
@@ -439,22 +541,22 @@ WHERE
 
 Java代码
 
-因为嵌套在前，无法像上面的例子 6 一样使用，这时候要借助 [nested](https://mp.baomidou.com/guide/wrapper.html#nested)
+和例子 5 和例子 6 不同。这里是正常嵌套，SQL 句子前面不带 `AND` 或者 `OR`，这时候要借助 [nested](https://mp.baomidou.com/guide/wrapper.html#nested)
 
 ```java
 @Test
 public void selectByWrapper7() {
-    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-    queryWrapper.nested(qr -> qr.lt("age", 40)
-            .or()
-            .isNotNull("email"))
-            .likeRight("name", "王");
-    List<User> users = userMapper.selectList(queryWrapper);
+    List<User> users = userMapper.selectList(new QueryWrapper<User>()
+            .nested(qr -> qr.lt("age", 40)
+                            .or()
+                            .isNotNull("email"))
+            .likeRight("name", "王"));
+
     users.forEach(System.out::println);
 }
 ```
 
-8. 年龄为30 或者 31 或者 34 或者 35
+8. 年龄为 30 或者 31 或者 34 或者 35
 
 SQL是
 
@@ -472,9 +574,9 @@ Java代码
 ```java
 @Test
 public void selectByWrapper8() {
-    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-    queryWrapper.in("age", Arrays.asList(30, 31, 34, 35));
-    List<User> users = userMapper.selectList(queryWrapper);
+    List<User> users = userMapper.selectList(new QueryWrapper<User>()
+            .in("age", Arrays.asList(30, 31, 34, 35)));
+    
     users.forEach(System.out::println);
 }
 ```
@@ -498,16 +600,19 @@ Java代码
 ```java
 @Test
 public void selectByWrapper9() {
-    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-    queryWrapper.in("age", Arrays.asList(30, 31, 34, 35)).last("LIMIT 1");
-    List<User> users = userMapper.selectList(queryWrapper);
+    List<User> users = userMapper.selectList(new QueryWrapper<User>()
+            .in("age", Arrays.asList(30, 31, 34, 35))
+            .last("LIMIT 1"));
+    
     users.forEach(System.out::println);
 }
 ```
 
-`last()` 方法只能调用 1 次
+**注意：**`last()` 方法只能调用 1 次
 
 ## SELECT不列出全部字段
+
+默认是查询所有字段，如果只需要特定的字段，要怎么做呢？，可以利用 [select](https://mp.baomidou.com/guide/wrapper.html#select) 来实现
 
 10. 名字中包含“雨”并且年龄小于40，只列出 id 和 name 字段
 
@@ -523,18 +628,16 @@ WHERE
     AND age < 40
 ```
 
-利用 [select](https://mp.baomidou.com/guide/wrapper.html#select) 来实现
-
 Java代码
 
 ```java
 @Test
 public void selectByWrapper10() {
-    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-    queryWrapper.select("id", "name")
-        .like("name", "雨")
-        .lt("age", 40);
-    List<User> users = userMapper.selectList(queryWrapper);
+    List<User> users = userMapper.selectList(new QueryWrapper<User>()
+            .select("id", "name")
+            .like("name", "雨")
+            .lt("age", 40));
+    
     users.forEach(System.out::println);
 }
 ```
@@ -555,15 +658,16 @@ WHERE
 
 Java代码
 
+除了 create_time 和 manager_id 字段外都列出，`select` 也支持
+
 ```java
 @Test
 public void selectByWrapper11() {
-    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-    queryWrapper.like("name", "雨")
+    List<User> users = userMapper.selectList(new QueryWrapper<User>().like("name", "雨")
             .lt("age", 40)
-            .select(User.class, tableFieldInfo -> !tableFieldInfo.getColumn().equals("create_time")
-                    && !tableFieldInfo.getColumn().equals("manager_id"));  // select也可以写在后面
-    List<User> users = userMapper.selectList(queryWrapper);
+            .select(User.class, fieldInfo -> !fieldInfo.getColumn().equals("create_time")
+                    && !fieldInfo.getColumn().equals("manager_id"))); // select也可以写在后面
+    
     users.forEach(System.out::println);
 }
 ```
@@ -641,7 +745,7 @@ private void selectByWrapperNameEmail2(String name, String email) {
 
 ## 创建条件构造器时传入实体对象
 
-可以传一个实体对象，MyBatis-Plus 会根据实体对象的属性去创造 SQL
+可以传一个实体对象，MyBatis-Plus 会根据实体对象的属性去创造 SQL。这个比 `selectByMap(Map<String, Object> columnMap)` 方法可读性更好
 
 ```java
 @Test
@@ -656,7 +760,7 @@ public void selectByWrapperEntity() {
 }
 ```
 
-得到的 SQL 是
+控制台输入日志为
 
 ```
 DEBUG==>  Preparing: SELECT id,name,age,email,manager_id,create_time FROM user WHERE name=? AND age=? 
@@ -1291,6 +1395,35 @@ DEBUG<==      Total: 2
 总个数: 5
 User(id=1087982257332887553, name=大boss, age=40, email=boss@baomidu.com, managerId=null, createTime=Fri Jan 11 14:20:20 CST 2019)
 User(id=1088250446457389085, name=李艺伟, age=28, email=lyw@baomidu.com, managerId=1088248166370832385, createTime=Thu Feb 14 08:31:16 CST 2019)
+```
+
+## lambda 条件构造器查询
+
+上面使用 `QueryWrapper` 和 `UpdateWrapper` 的时候，都需要手工填写字段名。如果表结构改了，那么就要去手工查找与替换字段名。如果用 lambda 的条件构造器的话，就可以省略很多工作量了
+
+现在使用 lambda 条件构造器重写例子 1 的代码。名字中包含“雨”并且年龄小于40，SQL 是
+
+```sql
+SELECT
+    *
+FROM
+    user 
+WHERE
+    name LIKE '%雨%'
+    AND age < 40
+```
+
+Java 代码
+
+```java
+@Test
+public void selectLambda() {
+    List<User> userList = userMapper.selectList(new LambdaQueryWrapper<User>()
+            .like(User::getName, "雨")
+            .lt(User::getAge, 40));
+
+    userList.forEach(System.out::println);
+}
 ```
 
 # 更新
