@@ -87,6 +87,48 @@ server {
 
 如果访问的是 `https://www.domain.com`，将会进入监听 443 端口的 `server` 代码块
 
+## 特殊情况
+
+当使用同一个 IP 地址去配置两个或更多的 HTTPS 服务器的时候，会出现证书不匹配的情況
+
+比如两个域名 `www.example.com` 和 `www.example.org`，它们的 IP 都是一样的，Nginx 的配置如下
+
+```nginx
+server {
+  listen          443 ssl;
+  server_name     www.example.com;
+  ssl_certificate www.example.com.crt;
+  #...
+}
+
+server {
+  listen          443 ssl;
+  server_name     www.example.org;
+  ssl_certificate www.example.org.crt;
+  #...
+}
+```
+
+如果浏览器请求 `www.example.org`，得到的证书会是默认的 `www.example.com.crt`，而不是 `www.example.org.crt`。这是因为 SSL 协议行为所致，SSL 连接在浏览器发送 HTTP 请求之前就被建立，Nginx 并不知道被请求的服务器名字，因此 Nginx 只会提供默认的服务器证书
+
+解決这个问题最原始最有效的方法就是为每个 HTTPS 服务器分配独立的 IP 地址：
+
+```nginx
+server {
+    listen          192.168.1.1:443 ssl;
+    server_name     www.example.com;
+    ssl_certificate www.example.com.crt;
+    #...
+}
+
+server {
+    listen          192.168.1.2:443 ssl;
+    server_name     www.example.org;
+    ssl_certificate www.example.org.crt;
+    #...
+}
+```
+
 # 背景知识
 
 ## 证书的分类
