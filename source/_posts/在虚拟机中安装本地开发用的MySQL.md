@@ -1,7 +1,15 @@
 ---
 title: 在虚拟机中安装本地开发用的MySQL
 date: 2020-01-29 16:00:48
-tags:
+tags:  
+  - MySQL
+  - CentOS
+  - 虚拟机
+  - VMWare
+  - 防火墙
+  - SELinux
+categories:
+  - MySQL
 ---
 
 
