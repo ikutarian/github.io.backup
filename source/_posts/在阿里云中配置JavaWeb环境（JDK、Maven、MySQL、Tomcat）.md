@@ -3,6 +3,7 @@ title: 在阿里云中配置-JavaWeb-环境（JDK、Maven、MySQL、Tomcat）
 date: 2018-09-15 14:57:44
 tags:
   - JDK
+  - OpenJdk
   - Maven
   - MySQL
   - Tomcat
@@ -38,6 +39,10 @@ mkdir -p app/tomcat
 <!-- more -->
 
 ## JDK
+
+JDK 有两种，Oracle JDK 和 Open JDK。下面分别具体说明
+
+### Oracle JDK
 
 首先百度一下 JDK
 
@@ -92,6 +97,14 @@ source /etc/profile
 
 ```
 javac
+```
+
+### Open JDK
+
+一条命令即可直接安装
+
+```
+apt-get install openjdk-8-jdk
 ```
 
 ## Maven
